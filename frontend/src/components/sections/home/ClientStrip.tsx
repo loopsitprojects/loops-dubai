@@ -12,7 +12,6 @@ import commercialBankLogo from '@/assets/clients/commercial-bank.svg'
 import keellsLogo from '@/assets/clients/keells.png'
 import sampathLogo from '@/assets/clients/sampath-bank.png'
 import elephantHouseLogo from '@/assets/clients/elephant-house.png'
-import ceatLogo from '@/assets/clients/ceat.png'
 import havelockLogo from '@/assets/clients/havelock-city-mall.png'
 import britishCouncilLogo from '@/assets/clients/british-council.png'
 import nasDailyLogo from '@/assets/clients/nas-daily.png'
@@ -45,8 +44,6 @@ const localClientLogos: Record<string, string> = {
   'sampath bank': sampathLogo,
   'elephant house': elephantHouseLogo,
   'elephant': elephantHouseLogo,
-  'ceat': ceatLogo,
-  'ceat tyres': ceatLogo,
   'british council': britishCouncilLogo,
   'nas daily': nasDailyLogo,
   'nas': nasDailyLogo,
@@ -61,7 +58,6 @@ const fallbackClients: Client[] = [
   { id: 4, name: 'Yamaha', logo_url: yamahaLogo },
   { id: 5, name: 'PepsiCo', logo_url: pepsiLogo },
   { id: 6, name: 'Elephant House', logo_url: elephantHouseLogo },
-  { id: 7, name: 'CEAT', logo_url: ceatLogo },
   { id: 8, name: 'Hemas', logo_url: hemasLogo },
   { id: 9, name: 'Softlogic Life', logo_url: softlogicLifeLogo },
   { id: 10, name: 'Cargills', logo_url: cargillsLogo },
