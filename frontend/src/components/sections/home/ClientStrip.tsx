@@ -14,6 +14,8 @@ import sampathLogo from '@/assets/clients/sampath-bank.png'
 import elephantHouseLogo from '@/assets/clients/elephant-house.png'
 import ceatLogo from '@/assets/clients/ceat.svg'
 import havelockLogo from '@/assets/clients/havelock-city-mall.png'
+import britishCouncilLogo from '@/assets/clients/british-council.png'
+import nasDailyLogo from '@/assets/clients/nas-daily.png'
 
 const localClientLogos: Record<string, string> = {
   'havelock city mall': havelockLogo,
@@ -44,6 +46,9 @@ const localClientLogos: Record<string, string> = {
   'elephant': elephantHouseLogo,
   'ceat': ceatLogo,
   'ceat tyres': ceatLogo,
+  'british council': britishCouncilLogo,
+  'nas daily': nasDailyLogo,
+  'nas': nasDailyLogo,
 }
 
 const fallbackClients: Client[] = [
@@ -60,6 +65,8 @@ const fallbackClients: Client[] = [
   { id: 11, name: 'Commercial Bank', logo_url: commercialBankLogo },
   { id: 12, name: 'Keells', logo_url: keellsLogo },
   { id: 13, name: 'Sampath Bank', logo_url: sampathLogo },
+  { id: 14, name: 'British Council', logo_url: britishCouncilLogo },
+  { id: 15, name: 'Nas Daily', logo_url: nasDailyLogo },
 ]
 
 function ClientLogo({ name, logo_url }: { name: string; logo_url?: string }) {
