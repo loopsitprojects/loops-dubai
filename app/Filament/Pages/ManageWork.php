@@ -35,11 +35,15 @@ class ManageWork extends Page implements HasForms
         $hero = $heroRecord?->data ?? [];
         $pageRecord = SitePage::where('key', 'work')->first();
 
+        $latestWorkRecord = PageSection::where('page', 'home')->where('section', 'latest_work')->first();
+        $showViewAllOnHome = (bool) ($latestWorkRecord?->data['show_view_all'] ?? false);
+
         $this->form->fill([
             'page_settings' => [
                 'is_published' => $pageRecord?->is_published ?? true,
                 'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
             ],
+            'homepage_show_view_all' => $showViewAllOnHome,
             'hero' => $hero,
         ]);
     }
@@ -60,6 +64,13 @@ class ManageWork extends Page implements HasForms
                                 ->helperText('When enabled, the Work link appears in the navigation bar.')
                                 ->default(true),
                         ]),
+                    ]),
+                Section::make('Homepage Link & Card')
+                    ->schema([
+                        Toggle::make('homepage_show_view_all')
+                            ->label('Show "View All Work" Link & Card on Homepage')
+                            ->helperText('When disabled, the "View All Work ->" header link and the dashed carousel end card on the homepage are hidden.')
+                            ->default(false),
                     ]),
                 Section::make('Hero Content')
                     ->schema([
@@ -105,6 +116,21 @@ class ManageWork extends Page implements HasForms
                 'show_in_nav'  => $showInNav,
             ]
         );
+
+        if (isset($state['homepage_show_view_all'])) {
+            $latestWorkRecord = PageSection::where('page', 'home')->where('section', 'latest_work')->first();
+            $lwData = $latestWorkRecord?->data ?? [
+                'is_visible' => true,
+                'label' => 'Latest Work',
+                'title_line1' => 'Real campaigns.',
+                'title_line2' => 'Real results.',
+            ];
+            $lwData['show_view_all'] = (bool) $state['homepage_show_view_all'];
+            PageSection::updateOrCreate(
+                ['page' => 'home', 'section' => 'latest_work'],
+                ['data' => $lwData, 'published' => true]
+            );
+        }
 
         PageSection::updateOrCreate(
             ['page' => 'work', 'section' => 'hero'],

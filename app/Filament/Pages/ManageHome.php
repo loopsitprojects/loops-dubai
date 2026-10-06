@@ -5,9 +5,11 @@ namespace App\Filament\Pages;
 use App\Models\PageSection;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -42,10 +44,20 @@ class ManageHome extends Page implements HasForms
         $newsletterRecord = PageSection::where('page', 'home')->where('section', 'newsletter')->first();
         $newsletter = $newsletterRecord?->data ?? [];
 
+        $latestWorkRecord = PageSection::where('page', 'home')->where('section', 'latest_work')->first();
+        $latestWork = array_merge([
+            'is_visible' => true,
+            'show_view_all' => false,
+            'label' => 'Latest Work',
+            'title_line1' => 'Real campaigns.',
+            'title_line2' => 'Real results.',
+        ], $latestWorkRecord?->data ?? []);
+
         $this->form->fill([
             'hero' => $hero,
             'badges' => $badges,
             'stats' => $stats,
+            'latest_work' => $latestWork,
             'newsletter' => $newsletter,
         ]);
     }
@@ -150,6 +162,41 @@ class ManageHome extends Page implements HasForms
                                     ->addActionLabel('Add Stat')
                                     ->columnSpanFull(),
                             ]),
+                        Tabs\Tab::make('Latest Work Section')
+                            ->schema([
+                                Section::make('Display & Visibility')
+                                    ->description('Control the visibility of the Latest Work section and navigation elements.')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Toggle::make('latest_work.is_visible')
+                                                ->label('Show "Latest Work" Section')
+                                                ->helperText('Display or hide the entire Latest Work showcase section on the homepage.')
+                                                ->default(true),
+                                            Toggle::make('latest_work.show_view_all')
+                                                ->label('Show "View All Work" Link & Card')
+                                                ->helperText('Display or hide the "View All Work ->" header link and the dashed carousel end card.')
+                                                ->default(false),
+                                        ]),
+                                    ]),
+                                Section::make('Section Copy')
+                                    ->description('Customize the headings displayed at the top of the Latest Work section.')
+                                    ->schema([
+                                        Grid::make(3)->schema([
+                                            TextInput::make('latest_work.label')
+                                                ->label('Section Label')
+                                                ->default('Latest Work')
+                                                ->columnSpan(1),
+                                            TextInput::make('latest_work.title_line1')
+                                                ->label('Headline Line 1')
+                                                ->default('Real campaigns.')
+                                                ->columnSpan(1),
+                                            TextInput::make('latest_work.title_line2')
+                                                ->label('Headline Line 2')
+                                                ->default('Real results.')
+                                                ->columnSpan(1),
+                                        ]),
+                                    ]),
+                            ]),
                         Tabs\Tab::make('Newsletter')
                             ->schema([
                                 Grid::make(2)->schema([
@@ -195,6 +242,14 @@ class ManageHome extends Page implements HasForms
         PageSection::updateOrCreate(
             ['page' => 'home', 'section' => 'stats'],
             ['data' => ['stats' => $state['stats'] ?? []], 'published' => true]
+        );
+
+        PageSection::updateOrCreate(
+            ['page' => 'home', 'section' => 'latest_work'],
+            [
+                'data' => $state['latest_work'] ?? [],
+                'published' => true,
+            ]
         );
 
         PageSection::updateOrCreate(

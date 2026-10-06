@@ -333,10 +333,10 @@ export const api = {
     }
   },
   pages: {
-    get: (page: string) => get<{ data: Record<string, Record<string, string>> }>(`/pages/${page}`),
-    section: (page: string, section: string) => get<{ data: Record<string, string> }>(`/pages/${page}/${section}`),
+    get: (page: string) => get<{ data: Record<string, Record<string, any>> }>(`/pages/${page}`),
+    section: (page: string, section: string) => get<{ data: Record<string, any> }>(`/pages/${page}/${section}`),
   },
-  settings: () => get<{ data: Record<string, Record<string, string>> }>('/settings'),
+  settings: () => get<{ data: Record<string, Record<string, any>> }>('/settings'),
   navigation: () => get<NavigationResponse>('/navigation'),
   contact: (body: { name: string; email: string; company?: string; service?: string; message: string; office_context?: string; recaptcha_token?: string | null }) =>
     post<{ message: string }>('/contact', body),
