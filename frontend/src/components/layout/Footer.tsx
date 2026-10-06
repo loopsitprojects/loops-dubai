@@ -4,25 +4,6 @@ import { api } from '@/lib/api'
 import { getRecaptchaToken } from '@/lib/recaptcha'
 import BrandLogo from '@/components/ui/BrandLogo'
 
-const footerLinks = {
-  Services: [
-    { label: 'Creative',              href: '/creative' },
-    { label: 'Digital',               href: '/digital' },
-    { label: 'Play',                  href: '/play' },
-    { label: 'Tech',                  href: '/tech' },
-    { label: 'AI Content',            href: '/ai-content' },
-    { label: 'Performance Marketing', href: '/performance-marketing' },
-    { label: 'Events & Experiences',  href: '/events' },
-  ],
-  Company: [
-    { label: 'About Us',             href: '/about' },
-    { label: 'Our Work',             href: '/work' },
-    { label: 'Press & Achievements', href: '/press' },
-    { label: 'Careers',              href: '/careers' },
-    { label: 'Contact Us',           href: '/contact' },
-  ],
-}
-
 export default function Footer() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -133,14 +114,14 @@ export default function Footer() {
     <footer className="bg-brand-dark border-t border-white/5">
       {/* Main footer */}
       <div className="section-padding py-12 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start justify-between">
 
           {/* Brand col */}
-          <div className="lg:col-span-1">
+          <div className="max-w-md">
             <Link to="/" className="mb-6 group inline-block" aria-label="Loops Integrated Home">
               <BrandLogo size="md" />
             </Link>
-            <p className="text-white/40 text-sm leading-relaxed max-w-xs mb-8">
+            <p className="text-white/40 text-sm leading-relaxed mb-8">
               {footerData.tagline}
             </p>
 
@@ -177,27 +158,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Nav link columns */}
-          {Object.entries(footerLinks).map(([group, links]) => (
-            <div key={group}>
-              <p className="label text-white/70 mb-5">{group}</p>
-              <ul className="space-y-3">
-                {links.map(link => (
-                  <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      className="text-white/60 hover:text-white transition-colors duration-200 text-sm"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
           {/* Newsletter */}
-          <div>
+          <div className="max-w-md lg:ml-auto w-full">
             <p className="label text-white/70 mb-5">Newsletter</p>
             <p className="text-white/50 text-sm mb-6 leading-relaxed">
               Monthly creative insights & industry updates delivered to your inbox.
