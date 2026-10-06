@@ -108,6 +108,7 @@ export default function Navbar() {
 
   const firstTopLink = topLinks.length > 0 ? topLinks[0] : null
   const remainingTopLinks = topLinks.length > 1 ? topLinks.slice(1) : []
+  const hasAnyLinks = topLinks.length > 0 || integratedLinks.length > 0 || !!ctaLink
 
   return (
     <>
@@ -130,16 +131,9 @@ export default function Navbar() {
           }}
         />
 
-        <div className="section-padding flex items-center justify-between relative">
-          {/* Logo (Left) */}
-          <Link to="/" className="flex items-center group z-10" aria-label="Loops Integrated Home">
-            <span className="lg:hidden"><BrandLogo size="mobile" /></span>
-            <span className="hidden lg:inline-flex"><BrandLogo size="md" /></span>
-          </Link>
-
-          {/* Centered Desktop Nav */}
-          <div className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2">
-            {/* First top link (e.g. Work) */}
+        <div className="section-padding flex items-center justify-between relative min-h-[48px]">
+          {/* Left area (Desktop links) */}
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8 flex-1 justify-start z-10">
             {firstTopLink && (
               <Link
                 key={firstTopLink.href}
@@ -189,7 +183,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.97 }}
                       transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-80 rounded-2xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)]"
+                      className="absolute top-full left-0 mt-4 w-80 rounded-2xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)]"
                       style={{
                         background: '#12121A',
                         border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -247,47 +241,58 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             )}
-
-            {/* Trailing desktop links (About, Press & Achievements, Careers) */}
-            {remainingTopLinks.map(link => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`transition-all duration-200 relative drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] after:absolute after:bottom-0 after:left-0 after:h-px after:bg-white after:transition-all after:duration-300 ${
-                  location.pathname === link.href || (link.href === '/press' && location.pathname === '/pr')
-                    ? 'text-white font-bold after:w-full'
-                    : 'text-white/90 hover:text-white font-semibold after:w-0 hover:after:w-full'
-                }`}
-                style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.90rem' }}
-              >
-                {link.label}
-              </Link>
-            ))}
           </div>
 
-          {/* Right CTA Button */}
-          {ctaLink && (
-            <div className="hidden lg:flex items-center z-10">
-              <Link
-                to={ctaLink.href}
-                className="px-5 py-2.5 rounded-full bg-white/12 border border-white/30 text-white hover:bg-brand-pink hover:border-brand-pink hover:scale-105 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-                style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.80rem', fontWeight: 600 }}
-              >
-                {ctaLink.label}
-              </Link>
-            </div>
-          )}
+          {/* Centered Logo */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20 pointer-events-auto">
+            <Link to="/" className="flex items-center justify-center group" aria-label="Loops Integrated Home">
+              <span className="lg:hidden"><BrandLogo size="mobile" /></span>
+              <span className="hidden lg:inline-flex"><BrandLogo size="md" /></span>
+            </Link>
+          </div>
 
-          {/* Hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden flex flex-col gap-2 p-3 z-[60]"
-            aria-label="Toggle menu"
-          >
-            <motion.span animate={menuOpen ? { rotate: 45, y: 10 } : { rotate: 0, y: 0 }} className="block w-7 h-0.5 bg-white" />
-            <motion.span animate={menuOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} className="block w-7 h-0.5 bg-white origin-left" />
-            <motion.span animate={menuOpen ? { rotate: -45, y: -10 } : { rotate: 0, y: 0 }} className="block w-7 h-0.5 bg-white" />
-          </button>
+          {/* Right area (Desktop trailing links, CTA & Mobile Hamburger) */}
+          <div className="flex items-center gap-6 xl:gap-8 flex-1 justify-end z-10">
+            <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+              {remainingTopLinks.map(link => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`transition-all duration-200 relative drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] after:absolute after:bottom-0 after:left-0 after:h-px after:bg-white after:transition-all after:duration-300 ${
+                    location.pathname === link.href || (link.href === '/press' && location.pathname === '/pr')
+                      ? 'text-white font-bold after:w-full'
+                      : 'text-white/90 hover:text-white font-semibold after:w-0 hover:after:w-full'
+                  }`}
+                  style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.90rem' }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {ctaLink && (
+                <Link
+                  to={ctaLink.href}
+                  className="px-5 py-2.5 rounded-full bg-white/12 border border-white/30 text-white hover:bg-brand-pink hover:border-brand-pink hover:scale-105 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                  style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.80rem', fontWeight: 600 }}
+                >
+                  {ctaLink.label}
+                </Link>
+              )}
+            </div>
+
+            {/* Hamburger on mobile */}
+            {hasAnyLinks && (
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="lg:hidden flex flex-col gap-2 p-3 z-[60]"
+                aria-label="Toggle menu"
+              >
+                <motion.span animate={menuOpen ? { rotate: 45, y: 10 } : { rotate: 0, y: 0 }} className="block w-7 h-0.5 bg-white" />
+                <motion.span animate={menuOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} className="block w-7 h-0.5 bg-white origin-left" />
+                <motion.span animate={menuOpen ? { rotate: -45, y: -10 } : { rotate: 0, y: 0 }} className="block w-7 h-0.5 bg-white" />
+              </button>
+            )}
+          </div>
         </div>
       </motion.nav>
 
