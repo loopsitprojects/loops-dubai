@@ -23,6 +23,10 @@ return [
         'http://localhost:5173',
         'http://loopsint.test',
         'https://loopsintegrated.com',
+        'https://uat.loopsintegrated.co',
+        'http://uat.loopsintegrated.co',
+        'https://loopsintegrated.co',
+        'http://loopsintegrated.co',
     ],
 
     'allowed_origins_patterns' => [],
