@@ -3,10 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -33,8 +35,13 @@ class ManageAbout extends Page implements HasForms
         $statementData = PageSection::where('page', 'about')->where('section', 'statement')->first()?->data ?? [];
         $recognitionData = PageSection::where('page', 'about')->where('section', 'recognition')->first()?->data ?? [];
         $ctaData = PageSection::where('page', 'about')->where('section', 'cta')->first()?->data ?? [];
+        $pageRecord = SitePage::where('key', 'about')->first();
 
         $this->form->fill([
+            'page_settings' => [
+                'is_published' => $pageRecord?->is_published ?? true,
+                'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
+            ],
             'hero' => [
                 'label' => $heroData['label'] ?? 'Who We Are',
                 'headline' => $heroData['headline'] ?? 'A creative-led agency for ambitious brands.',
@@ -134,6 +141,20 @@ class ManageAbout extends Page implements HasForms
                                         ->columnSpan(1),
                                 ]),
                             ]),
+                        Tabs\Tab::make('Publication Status')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    Toggle::make('page_settings.is_published')
+                                        ->label('Page Published')
+                                        ->helperText('When unpublished, the About page is unavailable on the public website.')
+                                        ->default(true),
+                                    Toggle::make('page_settings.show_in_nav')
+                                        ->label('Publish in Nav Bar')
+                                        ->helperText('When enabled, the About link appears in the navigation bar.')
+                                        ->default(true),
+                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -144,24 +165,38 @@ class ManageAbout extends Page implements HasForms
     {
         $state = $this->form->getState();
 
+        $isPublished = $state['page_settings']['is_published'] ?? true;
+        $showInNav   = $state['page_settings']['show_in_nav'] ?? true;
+
+        SitePage::updateOrCreate(
+            ['key' => 'about'],
+            [
+                'label'        => 'About',
+                'url'          => '/about',
+                'nav_group'    => 'top',
+                'is_published' => $isPublished,
+                'show_in_nav'  => $showInNav,
+            ]
+        );
+
         PageSection::updateOrCreate(
             ['page' => 'about', 'section' => 'hero'],
-            ['data' => $state['hero'], 'published' => true]
+            ['data' => $state['hero'], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'about', 'section' => 'statement'],
-            ['data' => $state['statement'], 'published' => true]
+            ['data' => $state['statement'], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'about', 'section' => 'recognition'],
-            ['data' => $state['recognition'], 'published' => true]
+            ['data' => $state['recognition'], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'about', 'section' => 'cta'],
-            ['data' => $state['cta'], 'published' => true]
+            ['data' => $state['cta'], 'published' => $isPublished]
         );
 
         Notification::make()

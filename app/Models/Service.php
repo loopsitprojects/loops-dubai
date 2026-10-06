@@ -20,6 +20,15 @@ class Service extends Model implements HasMedia
 
     protected $casts = ['published' => 'boolean'];
 
+    protected static function booted()
+    {
+        static::saved(function (Service $service) {
+            SitePage::where('key', $service->slug)->update([
+                'is_published' => $service->published,
+            ]);
+        });
+    }
+
     public function capabilities(): HasMany
     {
         return $this->hasMany(ServiceCapability::class)->orderBy('sort_order');

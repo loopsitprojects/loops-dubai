@@ -214,6 +214,24 @@ export interface PressItem {
   sort_order: number
 }
 
+export interface NavigationPageItem {
+  id: number
+  key: string
+  label: string
+  url: string
+  nav_group: 'top' | 'integrated' | 'cta' | 'hidden'
+  is_published: boolean
+  show_in_nav: boolean
+  sort_order: number
+  icon?: string | null
+  description?: string | null
+}
+
+export interface NavigationResponse {
+  navbar_published: boolean
+  pages: NavigationPageItem[]
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {
@@ -319,6 +337,7 @@ export const api = {
     section: (page: string, section: string) => get<{ data: Record<string, string> }>(`/pages/${page}/${section}`),
   },
   settings: () => get<{ data: Record<string, Record<string, string>> }>('/settings'),
+  navigation: () => get<NavigationResponse>('/navigation'),
   contact: (body: { name: string; email: string; company?: string; service?: string; message: string; office_context?: string; recaptcha_token?: string | null }) =>
     post<{ message: string }>('/contact', body),
   newsletter: {

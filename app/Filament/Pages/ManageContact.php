@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\PageSection;
 use App\Models\Office;
+use App\Models\SitePage;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -35,6 +37,7 @@ class ManageContact extends Page implements HasForms
     {
         $heroRecord = PageSection::where('page', 'contact')->where('section', 'hero')->first();
         $heroData = $heroRecord?->data ?? [];
+        $pageRecord = SitePage::where('key', 'contact')->first();
 
         $hero = [
             'label' => $heroData['label'] ?? 'Get in Touch',
@@ -67,6 +70,10 @@ class ManageContact extends Page implements HasForms
         })->toArray();
 
         $this->form->fill([
+            'page_settings' => [
+                'is_published' => $pageRecord?->is_published ?? true,
+                'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
+            ],
             'hero' => $hero,
             'service_options' => $serviceOptions,
             'offices' => $offices,
@@ -171,6 +178,20 @@ class ManageContact extends Page implements HasForms
                                     ->addActionLabel('Add Office')
                                     ->columnSpanFull(),
                             ]),
+                        Tabs\Tab::make('Publication Status')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    Toggle::make('page_settings.is_published')
+                                        ->label('Page Published')
+                                        ->helperText('When unpublished, the Contact page is unavailable on the public website.')
+                                        ->default(true),
+                                    Toggle::make('page_settings.show_in_nav')
+                                        ->label('Publish in Nav Bar')
+                                        ->helperText('When enabled, the Contact / Let\'s Talk button appears in the navigation bar.')
+                                        ->default(true),
+                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -181,17 +202,31 @@ class ManageContact extends Page implements HasForms
     {
         $state = $this->form->getState();
 
+        $isPublished = $state['page_settings']['is_published'] ?? true;
+        $showInNav   = $state['page_settings']['show_in_nav'] ?? true;
+
+        SitePage::updateOrCreate(
+            ['key' => 'contact'],
+            [
+                'label'        => 'Contact',
+                'url'          => '/contact',
+                'nav_group'    => 'cta',
+                'is_published' => $isPublished,
+                'show_in_nav'  => $showInNav,
+            ]
+        );
+
         // Save hero section
         PageSection::updateOrCreate(
             ['page' => 'contact', 'section' => 'hero'],
-            ['data' => $state['hero'], 'published' => true]
+            ['data' => $state['hero'], 'published' => $isPublished]
         );
 
         // Save service options
         $optionsString = implode(',', $state['service_options']);
         PageSection::updateOrCreate(
             ['page' => 'contact', 'section' => 'form_fields'],
-            ['data' => ['service_options' => $optionsString], 'published' => true]
+            ['data' => ['service_options' => $optionsString], 'published' => $isPublished]
         );
 
         // Save offices list

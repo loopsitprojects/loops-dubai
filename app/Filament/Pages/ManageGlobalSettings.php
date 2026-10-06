@@ -3,10 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -35,9 +37,14 @@ class ManageGlobalSettings extends Page implements HasForms
         $footerRecord = PageSection::where('page', 'global')->where('section', 'footer')->first();
         $footer = $footerRecord?->data ?? [];
 
+        $navPublished = SitePage::isNavbarPublished();
+
         $this->form->fill([
             'site' => $site,
             'footer' => $footer,
+            'navigation' => [
+                'navbar_published' => $navPublished,
+            ],
         ]);
     }
 
@@ -126,6 +133,17 @@ class ManageGlobalSettings extends Page implements HasForms
                                         ->columnSpan(1),
                                 ]),
                             ]),
+                        Tabs\Tab::make('Navigation Bar')
+                            ->icon('heroicon-o-bars-3')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    Toggle::make('navigation.navbar_published')
+                                        ->label('Publish Nav Bar (Show Navigation Bar on public website)')
+                                        ->helperText('When enabled, the header navigation bar appears on all pages. When disabled, the navigation bar is hidden.')
+                                        ->default(true)
+                                        ->columnSpan(2),
+                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -145,6 +163,10 @@ class ManageGlobalSettings extends Page implements HasForms
             ['page' => 'global', 'section' => 'footer'],
             ['data' => $state['footer'], 'published' => true]
         );
+
+        if (isset($state['navigation']['navbar_published'])) {
+            SitePage::setNavbarPublished((bool) $state['navigation']['navbar_published']);
+        }
 
         Notification::make()
             ->title('Global Settings saved successfully!')

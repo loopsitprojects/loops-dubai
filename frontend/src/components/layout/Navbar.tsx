@@ -1,19 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BrandLogo from '@/components/ui/BrandLogo'
 import NavLogoWebGL from '@/components/ui/NavLogoWebGL'
+import { useNavigation } from '@/context/NavigationContext'
 
-// Top-level desktop links
-const topLinks = [
+// Fallback top-level desktop links if API has not responded yet
+const defaultTopLinks = [
   { label: 'Work',                 href: '/work' },
   { label: 'About',                href: '/about' },
   { label: 'Press & Achievements', href: '/press' },
   { label: 'Careers',              href: '/careers' },
 ]
 
-// Sub-pages under "Integrated" dropdown
-const integratedLinks = [
+// Fallback sub-pages under "Integrated" dropdown
+const defaultIntegratedLinks = [
   { label: 'Creative',              href: '/creative',              icon: '✦', desc: 'Brand identity & campaigns' },
   { label: 'Digital',               href: '/digital',               icon: '◎', desc: 'Performance & growth' },
   { label: 'Tech',                  href: '/tech',                  icon: '⬡', desc: 'MarTech & automation' },
@@ -23,23 +24,9 @@ const integratedLinks = [
   { label: 'Events & Experiences',  href: '/events',                icon: '⬢', desc: 'Activations & management' },
 ]
 
-// All links for mobile menu
-const allMobileLinks = [
-  { label: 'Work',                  href: '/work' },
-  { label: 'About',                 href: '/about' },
-  { label: 'Creative',              href: '/creative' },
-  { label: 'Digital',               href: '/digital' },
-  { label: 'Tech',                  href: '/tech' },
-  { label: 'Play',                  href: '/play' },
-  { label: 'AI Content',            href: '/ai-content' },
-  { label: 'Performance Marketing', href: '/performance-marketing' },
-  { label: 'Events & Experiences',  href: '/events' },
-  { label: 'Press & Achievements',  href: '/press' },
-  { label: 'Careers',               href: '/careers' },
-  { label: 'Contact',               href: '/contact' },
-]
-
 export default function Navbar() {
+  const { navbarPublished, pages } = useNavigation()
+
   const [scrolled, setScrolled]             = useState(false)
   const [menuOpen, setMenuOpen]             = useState(false)
   const [dropOpen, setDropOpen]             = useState(false)
@@ -48,6 +35,37 @@ export default function Navbar() {
   const location = useLocation()
   const dropRef  = useRef<HTMLDivElement>(null)
   const dropTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Compute active navigation links dynamically from database settings
+  const topLinks = useMemo(() => {
+    if (!pages || pages.length === 0) return defaultTopLinks
+    return pages
+      .filter(p => p.nav_group === 'top' && p.show_in_nav && p.is_published)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(p => ({ label: p.label, href: p.url }))
+  }, [pages])
+
+  const integratedLinks = useMemo(() => {
+    if (!pages || pages.length === 0) return defaultIntegratedLinks
+    return pages
+      .filter(p => p.nav_group === 'integrated' && p.show_in_nav && p.is_published)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(p => ({
+        label: p.label,
+        href: p.url,
+        icon: p.icon || '✦',
+        desc: p.description || '',
+      }))
+  }, [pages])
+
+  const ctaLink = useMemo(() => {
+    if (!pages || pages.length === 0) return { label: "Let's Talk", href: '/contact' }
+    const cta = pages.find(p => p.nav_group === 'cta')
+    if (cta && cta.show_in_nav && cta.is_published) {
+      return { label: cta.label || "Let's Talk", href: cta.url || '/contact' }
+    }
+    return null
+  }, [pages])
 
   useEffect(() => {
     setMenuOpen(false)
@@ -83,6 +101,14 @@ export default function Navbar() {
   // Check if any integrated sub-page is active
   const integratedActive = integratedLinks.some(l => location.pathname === l.href)
 
+  // If the Nav Bar is unpublished globally from the admin panel, hide it
+  if (!navbarPublished) {
+    return null
+  }
+
+  const firstTopLink = topLinks.length > 0 ? topLinks[0] : null
+  const remainingTopLinks = topLinks.length > 1 ? topLinks.slice(1) : []
+
   return (
     <>
       <motion.nav
@@ -113,115 +139,117 @@ export default function Navbar() {
 
           {/* Centered Desktop Nav */}
           <div className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2">
-            {/* Work */}
-            {topLinks.slice(0, 1).map(link => (
+            {/* First top link (e.g. Work) */}
+            {firstTopLink && (
               <Link
-                key={link.href}
-                to={link.href}
+                key={firstTopLink.href}
+                to={firstTopLink.href}
                 className={`transition-all duration-200 relative drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] after:absolute after:bottom-0 after:left-0 after:h-px after:bg-white after:transition-all after:duration-300 ${
-                  location.pathname === link.href || (link.href === '/press' && location.pathname === '/pr')
+                  location.pathname === firstTopLink.href || (firstTopLink.href === '/press' && location.pathname === '/pr')
                     ? 'text-white font-bold after:w-full'
                     : 'text-white/90 hover:text-white font-semibold after:w-0 hover:after:w-full'
                 }`}
                 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.90rem' }}
               >
-                {link.label}
+                {firstTopLink.label}
               </Link>
-            ))}
+            )}
 
-            {/* Integrated dropdown */}
-            <div
-              ref={dropRef}
-              className="relative"
-              onMouseEnter={openDrop}
-              onMouseLeave={closeDrop}
-            >
-              <button
-                className={`flex items-center gap-1.5 transition-all duration-200 relative drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] after:absolute after:bottom-0 after:left-0 after:h-px after:bg-white after:transition-all after:duration-300 ${
-                  integratedActive || dropOpen
-                    ? 'text-white font-bold after:w-full'
-                    : 'text-white/90 hover:text-white font-semibold after:w-0 hover:after:w-full'
-                }`}
-                style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.92rem' }}
+            {/* Integrated dropdown (only if at least 1 sub-service is published) */}
+            {integratedLinks.length > 0 && (
+              <div
+                ref={dropRef}
+                className="relative"
+                onMouseEnter={openDrop}
+                onMouseLeave={closeDrop}
               >
-                Integrated
-                <motion.svg
-                  animate={{ rotate: dropOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-3.5 h-3.5 text-white opacity-90"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                <button
+                  className={`flex items-center gap-1.5 transition-all duration-200 relative drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] after:absolute after:bottom-0 after:left-0 after:h-px after:bg-white after:transition-all after:duration-300 ${
+                    integratedActive || dropOpen
+                      ? 'text-white font-bold after:w-full'
+                      : 'text-white/90 hover:text-white font-semibold after:w-0 hover:after:w-full'
+                  }`}
+                  style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.92rem' }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </motion.svg>
-              </button>
-
-              <AnimatePresence>
-                {dropOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-80 rounded-2xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)]"
-                    style={{
-                      background: '#12121A',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                    }}
-                    onMouseEnter={openDrop}
-                    onMouseLeave={closeDrop}
+                  Integrated
+                  <motion.svg
+                    animate={{ rotate: dropOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-3.5 h-3.5 text-white opacity-90"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
-                    {/* Header strip */}
-                    <div className="px-5 py-3.5 border-b border-white/15 bg-white/[0.04]">
-                      <p
-                        className="text-brand-pink font-bold uppercase tracking-wider"
-                        style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.75rem', letterSpacing: '0.12em' }}
-                      >
-                        Integrated Services
-                      </p>
-                    </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </motion.svg>
+                </button>
 
-                    {integratedLinks.map((link, i) => (
-                      <Link
-                        key={link.href}
-                        to={link.href}
-                        onClick={() => setDropOpen(false)}
-                        className={`group flex items-center gap-4 px-5 py-3.5 transition-all duration-200 ${
-                          location.pathname === link.href
-                            ? 'bg-brand-pink/15'
-                            : 'hover:bg-white/10'
-                        } ${i < integratedLinks.length - 1 ? 'border-b border-white/10' : ''}`}
-                      >
-                        <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                          <NavLogoWebGL size={22} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`transition-colors duration-200 leading-snug mb-0.5 ${
-                              location.pathname === link.href ? 'text-white font-bold' : 'text-white group-hover:text-brand-pink font-semibold'
-                            }`}
-                            style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.95rem' }}
-                          >
-                            {link.label}
-                          </p>
-                          <p
-                            className="text-gray-300 group-hover:text-white transition-colors duration-200"
-                            style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.78rem', fontWeight: 400 }}
-                          >
-                            {link.desc}
-                          </p>
-                        </div>
-                        {location.pathname === link.href && (
-                          <div className="ml-auto w-2 h-2 rounded-full bg-brand-pink flex-shrink-0 shadow-[0_0_8px_#E8005A]" />
-                        )}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                <AnimatePresence>
+                  {dropOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                      transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-80 rounded-2xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)]"
+                      style={{
+                        background: '#12121A',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                      }}
+                      onMouseEnter={openDrop}
+                      onMouseLeave={closeDrop}
+                    >
+                      {/* Header strip */}
+                      <div className="px-5 py-3.5 border-b border-white/15 bg-white/[0.04]">
+                        <p
+                          className="text-brand-pink font-bold uppercase tracking-wider"
+                          style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.75rem', letterSpacing: '0.12em' }}
+                        >
+                          Integrated Services
+                        </p>
+                      </div>
+
+                      {integratedLinks.map((link, i) => (
+                        <Link
+                          key={link.href}
+                          to={link.href}
+                          onClick={() => setDropOpen(false)}
+                          className={`group flex items-center gap-4 px-5 py-3.5 transition-all duration-200 ${
+                            location.pathname === link.href
+                              ? 'bg-brand-pink/15'
+                              : 'hover:bg-white/10'
+                          } ${i < integratedLinks.length - 1 ? 'border-b border-white/10' : ''}`}
+                        >
+                          <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                            <NavLogoWebGL size={22} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`transition-colors duration-200 leading-snug mb-0.5 ${
+                                location.pathname === link.href ? 'text-white font-bold' : 'text-white group-hover:text-brand-pink font-semibold'
+                              }`}
+                              style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.95rem' }}
+                            >
+                              {link.label}
+                            </p>
+                            <p
+                              className="text-gray-300 group-hover:text-white transition-colors duration-200"
+                              style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.78rem', fontWeight: 400 }}
+                            >
+                              {link.desc}
+                            </p>
+                          </div>
+                          {location.pathname === link.href && (
+                            <div className="ml-auto w-2 h-2 rounded-full bg-brand-pink flex-shrink-0 shadow-[0_0_8px_#E8005A]" />
+                          )}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             {/* Trailing desktop links (About, Press & Achievements, Careers) */}
-            {topLinks.slice(1).map(link => (
+            {remainingTopLinks.map(link => (
               <Link
                 key={link.href}
                 to={link.href}
@@ -238,15 +266,17 @@ export default function Navbar() {
           </div>
 
           {/* Right CTA Button */}
-          <div className="hidden lg:flex items-center z-10">
-            <Link
-              to="/contact"
-              className="px-5 py-2.5 rounded-full bg-white/12 border border-white/30 text-white hover:bg-brand-pink hover:border-brand-pink hover:scale-105 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-              style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.80rem', fontWeight: 600 }}
-            >
-              Let's Talk
-            </Link>
-          </div>
+          {ctaLink && (
+            <div className="hidden lg:flex items-center z-10">
+              <Link
+                to={ctaLink.href}
+                className="px-5 py-2.5 rounded-full bg-white/12 border border-white/30 text-white hover:bg-brand-pink hover:border-brand-pink hover:scale-105 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.80rem', fontWeight: 600 }}
+              >
+                {ctaLink.label}
+              </Link>
+            </div>
+          )}
 
           {/* Hamburger */}
           <button
@@ -277,145 +307,122 @@ export default function Navbar() {
             />
 
             <div className="relative flex flex-col gap-2 py-2">
-              {/* 1. Work */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.05, duration: 0.35 }}
-              >
-                <Link
-                  to="/work"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-white hover:text-brand-pink transition-colors py-1.5"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+              {/* 1. First top link (Work) */}
+              {firstTopLink && (
+                <motion.div
+                  initial={{ x: -25, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.05, duration: 0.35 }}
                 >
-                  Work
-                </Link>
-              </motion.div>
+                  <Link
+                    to={firstTopLink.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-white hover:text-brand-pink transition-colors py-1.5"
+                    style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+                  >
+                    {firstTopLink.label}
+                  </Link>
+                </motion.div>
+              )}
 
               {/* 2. Integrated Services (Collapsible Accordion) */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.35 }}
-                className="border-y border-white/10 py-2.5 my-1"
-              >
-                <button
-                  onClick={() => setMobileIntegratedOpen(!mobileIntegratedOpen)}
-                  className="w-full flex items-center justify-between text-white hover:text-brand-pink transition-colors py-1 text-left group"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+              {integratedLinks.length > 0 && (
+                <motion.div
+                  initial={{ x: -25, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.35 }}
+                  className="border-y border-white/10 py-2.5 my-1"
                 >
-                  <span className="flex items-center gap-3">
-                    Integrated
-                    <span className="text-xs font-mono font-normal uppercase tracking-widest text-brand-pink bg-brand-pink/15 px-2.5 py-0.5 rounded-full border border-brand-pink/30">
-                      Services
+                  <button
+                    onClick={() => setMobileIntegratedOpen(!mobileIntegratedOpen)}
+                    className="w-full flex items-center justify-between text-white hover:text-brand-pink transition-colors py-1 text-left group"
+                    style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+                  >
+                    <span className="flex items-center gap-3">
+                      Integrated
+                      <span className="text-xs font-mono font-normal uppercase tracking-widest text-brand-pink bg-brand-pink/15 px-2.5 py-0.5 rounded-full border border-brand-pink/30">
+                        Services
+                      </span>
                     </span>
-                  </span>
-                  <div className={`w-8 h-8 rounded-full border border-white/20 flex items-center justify-center transition-transform duration-300 ${mobileIntegratedOpen ? 'rotate-180 bg-brand-pink/20 border-brand-pink' : 'group-hover:border-white/40'}`}>
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </button>
+                    <div className={`w-8 h-8 rounded-full border border-white/20 flex items-center justify-center transition-transform duration-300 ${mobileIntegratedOpen ? 'rotate-180 bg-brand-pink/20 border-brand-pink' : 'group-hover:border-white/40'}`}>
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
 
-                {/* Collapsible Sub-Services */}
-                <AnimatePresence>
-                  {mobileIntegratedOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                      className="overflow-hidden pl-2 mt-3 flex flex-col gap-2 border-l-2 border-brand-pink/40"
-                    >
-                      {integratedLinks.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          to={sub.href}
-                          onClick={() => setMenuOpen(false)}
-                          className="group flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/5 transition-all"
-                        >
-                          <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                            <NavLogoWebGL size={20} />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-white font-semibold text-base group-hover:text-brand-pink transition-colors" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                              {sub.label}
-                            </span>
-                            <span className="text-xs text-white/50 group-hover:text-white/70">
-                              {sub.desc}
-                            </span>
-                          </div>
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                  {/* Collapsible Sub-Services */}
+                  <AnimatePresence>
+                    {mobileIntegratedOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden pl-2 mt-3 flex flex-col gap-2 border-l-2 border-brand-pink/40"
+                      >
+                        {integratedLinks.map((sub) => (
+                          <Link
+                            key={sub.href}
+                            to={sub.href}
+                            onClick={() => setMenuOpen(false)}
+                            className="group flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/5 transition-all"
+                          >
+                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                              <NavLogoWebGL size={20} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-white font-semibold text-base group-hover:text-brand-pink transition-colors" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                                {sub.label}
+                              </span>
+                              <span className="text-xs text-white/50 group-hover:text-white/70">
+                                {sub.desc}
+                              </span>
+                            </div>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
 
-              {/* 3. About */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.15, duration: 0.35 }}
-              >
-                <Link
-                  to="/about"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-white hover:text-brand-pink transition-colors py-1.5"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+              {/* 3. Trailing top links (About, Press, Careers, etc.) */}
+              {remainingTopLinks.map((link, idx) => (
+                <motion.div
+                  key={link.href}
+                  initial={{ x: -25, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.15 + idx * 0.05, duration: 0.35 }}
                 >
-                  About
-                </Link>
-              </motion.div>
+                  <Link
+                    to={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-white hover:text-brand-pink transition-colors py-1.5"
+                    style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
+              ))}
 
-              {/* 4. Press & Achievements */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.35 }}
-              >
-                <Link
-                  to="/press"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-white hover:text-brand-pink transition-colors py-1.5"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+              {/* 4. Contact / CTA link */}
+              {ctaLink && (
+                <motion.div
+                  initial={{ x: -25, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.15 + remainingTopLinks.length * 0.05, duration: 0.35 }}
                 >
-                  Press &amp; Achievements
-                </Link>
-              </motion.div>
-
-              {/* 5. Careers */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.25, duration: 0.35 }}
-              >
-                <Link
-                  to="/careers"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-white hover:text-brand-pink transition-colors py-1.5"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
-                >
-                  Careers
-                </Link>
-              </motion.div>
-
-              {/* 6. Contact */}
-              <motion.div
-                initial={{ x: -25, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.35 }}
-              >
-                <Link
-                  to="/contact"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-white hover:text-brand-pink transition-colors py-1.5"
-                  style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
-                >
-                  Contact
-                </Link>
-              </motion.div>
+                  <Link
+                    to={ctaLink.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-white hover:text-brand-pink transition-colors py-1.5"
+                    style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 'clamp(1.8rem, 6.5vw, 3rem)', letterSpacing: '-0.02em' }}
+                  >
+                    {ctaLink.label}
+                  </Link>
+                </motion.div>
+              )}
             </div>
 
             <motion.div
@@ -449,11 +456,11 @@ export default function Navbar() {
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
                 <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 stroke-white fill-none stroke-2" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 fill-none stroke-white" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span>Email Us (hello@loops.lk)</span>
+                <span>Drop Us an Email</span>
               </a>
             </motion.div>
           </motion.div>

@@ -1,16 +1,37 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import LoadingScreen from '@/components/ui/LoadingScreen'
 import CustomCursor from '@/components/ui/CustomCursor'
 import WhatsAppFloat from '@/components/ui/WhatsAppFloat'
+import UnpublishedPage from '@/components/ui/UnpublishedPage'
+import { NavigationProvider, useNavigation } from '@/context/NavigationContext'
 import gsap from 'gsap'
 import ScrollTrigger from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export default function App() {
+function MainContent() {
+  const location = useLocation()
+  const { isPagePublished, getPage, loading } = useNavigation()
+
+  // Dynamic route checking
+  const page = getPage(location.pathname)
+  const isPublished = isPagePublished(location.pathname)
+
+  if (!loading && !isPublished) {
+    return <UnpublishedPage pageTitle={page?.label} />
+  }
+
+  return (
+    <main key={location.pathname}>
+      <Outlet />
+    </main>
+  )
+}
+
+function AppContent() {
   const [loading, setLoading] = useState(true)
   const location = useLocation()
 
@@ -55,12 +76,17 @@ export default function App() {
     <>
       <CustomCursor />
       <Navbar />
-      <main key={location.pathname}>
-        <Outlet />
-      </main>
+      <MainContent />
       <WhatsAppFloat />
       <Footer />
     </>
   )
 }
 
+export default function App() {
+  return (
+    <NavigationProvider>
+      <AppContent />
+    </NavigationProvider>
+  )
+}

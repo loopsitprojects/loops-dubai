@@ -3,10 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
@@ -36,7 +38,13 @@ class ManageCareers extends Page implements HasForms
         $benefitsRecord = PageSection::where('page', 'careers')->where('section', 'benefits')->first();
         $benefits = $benefitsRecord?->data['benefits'] ?? [];
 
+        $pageRecord = SitePage::where('key', 'careers')->first();
+
         $this->form->fill([
+            'page_settings' => [
+                'is_published' => $pageRecord?->is_published ?? true,
+                'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
+            ],
             'hero' => $hero,
             'benefits' => $benefits,
         ]);
@@ -92,6 +100,20 @@ class ManageCareers extends Page implements HasForms
                                     ->addActionLabel('Add Benefit')
                                     ->columnSpanFull(),
                             ]),
+                        Tabs\Tab::make('Publication Status')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    Toggle::make('page_settings.is_published')
+                                        ->label('Page Published')
+                                        ->helperText('When unpublished, the Careers page is unavailable on the public website.')
+                                        ->default(true),
+                                    Toggle::make('page_settings.show_in_nav')
+                                        ->label('Publish in Nav Bar')
+                                        ->helperText('When enabled, Careers appears in the navigation bar.')
+                                        ->default(true),
+                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -102,14 +124,28 @@ class ManageCareers extends Page implements HasForms
     {
         $state = $this->form->getState();
 
+        $isPublished = $state['page_settings']['is_published'] ?? true;
+        $showInNav   = $state['page_settings']['show_in_nav'] ?? true;
+
+        SitePage::updateOrCreate(
+            ['key' => 'careers'],
+            [
+                'label'        => 'Careers',
+                'url'          => '/careers',
+                'nav_group'    => 'top',
+                'is_published' => $isPublished,
+                'show_in_nav'  => $showInNav,
+            ]
+        );
+
         PageSection::updateOrCreate(
             ['page' => 'careers', 'section' => 'hero'],
-            ['data' => $state['hero'], 'published' => true]
+            ['data' => $state['hero'], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'careers', 'section' => 'benefits'],
-            ['data' => ['benefits' => $state['benefits'] ?? []], 'published' => true]
+            ['data' => ['benefits' => $state['benefits'] ?? []], 'published' => $isPublished]
         );
 
         Notification::make()

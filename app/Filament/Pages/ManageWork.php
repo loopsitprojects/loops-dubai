@@ -3,9 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -30,8 +33,13 @@ class ManageWork extends Page implements HasForms
     {
         $heroRecord = PageSection::where('page', 'work')->where('section', 'hero')->first();
         $hero = $heroRecord?->data ?? [];
+        $pageRecord = SitePage::where('key', 'work')->first();
 
         $this->form->fill([
+            'page_settings' => [
+                'is_published' => $pageRecord?->is_published ?? true,
+                'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
+            ],
             'hero' => $hero,
         ]);
     }
@@ -40,26 +48,42 @@ class ManageWork extends Page implements HasForms
     {
         return $form
             ->schema([
-                Grid::make(2)->schema([
-                    TextInput::make('hero.label')
-                        ->label('Hero Label')
-                        ->required()
-                        ->columnSpan(2),
-                    TextInput::make('hero.headline')
-                        ->label('Headline')
-                        ->required()
-                        ->columnSpan(2),
-                    Textarea::make('hero.description_line1')
-                        ->label('Headline Paragraph 1')
-                        ->required()
-                        ->rows(3)
-                        ->columnSpan(2),
-                    Textarea::make('hero.description_line2')
-                        ->label('Headline Paragraph 2')
-                        ->required()
-                        ->rows(3)
-                        ->columnSpan(2),
-                ])
+                Section::make('Publication Status')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Toggle::make('page_settings.is_published')
+                                ->label('Page Published')
+                                ->helperText('When unpublished, the Work page is unavailable on the public website.')
+                                ->default(true),
+                            Toggle::make('page_settings.show_in_nav')
+                                ->label('Publish in Nav Bar')
+                                ->helperText('When enabled, the Work link appears in the navigation bar.')
+                                ->default(true),
+                        ]),
+                    ]),
+                Section::make('Hero Content')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextInput::make('hero.label')
+                                ->label('Hero Label')
+                                ->required()
+                                ->columnSpan(2),
+                            TextInput::make('hero.headline')
+                                ->label('Headline')
+                                ->required()
+                                ->columnSpan(2),
+                            Textarea::make('hero.description_line1')
+                                ->label('Headline Paragraph 1')
+                                ->required()
+                                ->rows(3)
+                                ->columnSpan(2),
+                            Textarea::make('hero.description_line2')
+                                ->label('Headline Paragraph 2')
+                                ->required()
+                                ->rows(3)
+                                ->columnSpan(2),
+                        ]),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -68,9 +92,23 @@ class ManageWork extends Page implements HasForms
     {
         $state = $this->form->getState();
 
+        $isPublished = $state['page_settings']['is_published'] ?? true;
+        $showInNav   = $state['page_settings']['show_in_nav'] ?? true;
+
+        SitePage::updateOrCreate(
+            ['key' => 'work'],
+            [
+                'label'        => 'Work',
+                'url'          => '/work',
+                'nav_group'    => 'top',
+                'is_published' => $isPublished,
+                'show_in_nav'  => $showInNav,
+            ]
+        );
+
         PageSection::updateOrCreate(
             ['page' => 'work', 'section' => 'hero'],
-            ['data' => $state['hero'], 'published' => true]
+            ['data' => $state['hero'], 'published' => $isPublished]
         );
 
         Notification::make()

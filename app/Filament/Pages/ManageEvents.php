@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\PageSection;
+use App\Models\SitePage;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -166,8 +167,13 @@ class ManageEvents extends Page implements HasForms
         ];
 
         $awards = \App\Models\Award::orderBy('sort_order')->orderByDesc('year')->get()->toArray();
+        $pageRecord = SitePage::where('key', 'events')->first();
 
         $this->form->fill([
+            'page_settings' => [
+                'is_published' => $pageRecord?->is_published ?? true,
+                'show_in_nav'  => $pageRecord?->show_in_nav ?? true,
+            ],
             'hero' => $hero,
             'stats' => $stats['stats'],
             'disciplines' => $disciplines['disciplines'],
@@ -441,6 +447,20 @@ class ManageEvents extends Page implements HasForms
                                     ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
                                     ->addActionLabel('Add Gallery Image'),
                             ]),
+                        Tabs\Tab::make('Publication Status')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    Toggle::make('page_settings.is_published')
+                                        ->label('Page Published')
+                                        ->helperText('When unpublished, the Events page is unavailable on the public website.')
+                                        ->default(true),
+                                    Toggle::make('page_settings.show_in_nav')
+                                        ->label('Publish in Nav Bar')
+                                        ->helperText('When enabled, Events & Experiences appears in the navigation bar dropdown.')
+                                        ->default(true),
+                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -451,34 +471,48 @@ class ManageEvents extends Page implements HasForms
     {
         $state = $this->form->getState();
 
+        $isPublished = $state['page_settings']['is_published'] ?? true;
+        $showInNav   = $state['page_settings']['show_in_nav'] ?? true;
+
+        SitePage::updateOrCreate(
+            ['key' => 'events'],
+            [
+                'label'        => 'Events & Experiences',
+                'url'          => '/events',
+                'nav_group'    => 'integrated',
+                'is_published' => $isPublished,
+                'show_in_nav'  => $showInNav,
+            ]
+        );
+
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'hero'],
-            ['data' => $state['hero'], 'published' => true]
+            ['data' => $state['hero'], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'stats'],
-            ['data' => ['stats' => $state['stats']], 'published' => true]
+            ['data' => ['stats' => $state['stats']], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'disciplines'],
-            ['data' => ['disciplines' => $state['disciplines']], 'published' => true]
+            ['data' => ['disciplines' => $state['disciplines']], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'process'],
-            ['data' => ['process' => $state['process']], 'published' => true]
+            ['data' => ['process' => $state['process']], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'past_events'],
-            ['data' => ['past_events' => $state['past_events']], 'published' => true]
+            ['data' => ['past_events' => $state['past_events']], 'published' => $isPublished]
         );
 
         PageSection::updateOrCreate(
             ['page' => 'events', 'section' => 'gallery'],
-            ['data' => ['gallery' => $state['gallery'] ?? []], 'published' => true]
+            ['data' => ['gallery' => $state['gallery'] ?? []], 'published' => $isPublished]
         );
 
         // Sync awards to database

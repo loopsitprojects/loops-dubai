@@ -42,8 +42,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/pages/{page}', [PageSectionController::class, 'show']);
     Route::get('/pages/{page}/{section}', [PageSectionController::class, 'section']);
 
-    // Site-wide settings
+    // Site-wide settings & navigation
     Route::get('/settings', [SiteSettingsController::class, 'index']);
+    Route::get('/navigation', [\App\Http\Controllers\Api\NavigationController::class, 'index']);
 
     // Careers
     Route::get('/jobs', [\App\Http\Controllers\Api\JobController::class, 'index']);
