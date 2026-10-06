@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer'
 import LoadingScreen from '@/components/ui/LoadingScreen'
 import CustomCursor from '@/components/ui/CustomCursor'
 import WhatsAppFloat from '@/components/ui/WhatsAppFloat'
-import UnpublishedPage from '@/components/ui/UnpublishedPage'
+import NotFound from '@/pages/NotFound'
 import { NavigationProvider, useNavigation } from '@/context/NavigationContext'
 import gsap from 'gsap'
 import ScrollTrigger from 'gsap/ScrollTrigger'
@@ -14,14 +14,13 @@ gsap.registerPlugin(ScrollTrigger)
 
 function MainContent() {
   const location = useLocation()
-  const { isPagePublished, getPage, loading } = useNavigation()
+  const { isPagePublished, loading } = useNavigation()
 
   // Dynamic route checking
-  const page = getPage(location.pathname)
   const isPublished = isPagePublished(location.pathname)
 
   if (!loading && !isPublished) {
-    return <UnpublishedPage pageTitle={page?.label} />
+    return <NotFound />
   }
 
   return (

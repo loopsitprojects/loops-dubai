@@ -56,9 +56,18 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const isPagePublished = useCallback((path: string): boolean => {
     if (loading || pages.length === 0) return true
-    const page = getPage(path)
-    if (!page) return true // Unregistered dynamic routes remain accessible unless matching a key
-    return page.is_published
+    const normalized = normalizePath(path)
+    const exactPage = getPage(normalized)
+    if (exactPage) return exactPage.is_published
+
+    // Check parent route (e.g. /careers/123 -> check /careers)
+    const parentPage = pages.find(p => {
+      const parentUrl = normalizePath(p.url)
+      return parentUrl !== '/' && normalized.startsWith(parentUrl + '/')
+    })
+    if (parentPage) return parentPage.is_published
+
+    return true // Unregistered dynamic routes remain accessible unless matching a key
   }, [loading, pages, getPage])
 
   return (
