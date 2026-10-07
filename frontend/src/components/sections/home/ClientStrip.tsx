@@ -3,7 +3,6 @@ import { api, Client, resolveImageUrl } from '@/lib/api'
 
 import yamahaLogo from '@/assets/clients/yamaha.svg'
 import pepsiLogo from '@/assets/clients/pepsi.png'
-import elephantHouseLogo from '@/assets/clients/elephant-house.png'
 import britishCouncilLogo from '@/assets/clients/british-council.png'
 import nasDailyLogo from '@/assets/clients/nas-daily.png'
 import raulandLogo from '@/assets/clients/rauland.png'
@@ -20,6 +19,8 @@ const REMOVED_CLIENT_KEYWORDS = [
   'cargills',
   'sampath',
   'ceat',
+  'elephant house',
+  'elephant',
 ]
 
 function isClientAllowed(name: string): boolean {
@@ -33,8 +34,6 @@ const localClientLogos: Record<string, string> = {
   'yamaha motor': yamahaLogo,
   'pepsi': pepsiLogo,
   'pepsico': pepsiLogo,
-  'elephant house': elephantHouseLogo,
-  'elephant': elephantHouseLogo,
   'british council': britishCouncilLogo,
   'nas daily': nasDailyLogo,
   'nas': nasDailyLogo,
@@ -45,7 +44,6 @@ const localClientLogos: Record<string, string> = {
 const fallbackClients: Client[] = [
   { id: 4, name: 'Yamaha', logo_url: yamahaLogo },
   { id: 5, name: 'PepsiCo', logo_url: pepsiLogo },
-  { id: 6, name: 'Elephant House', logo_url: elephantHouseLogo },
   { id: 14, name: 'British Council', logo_url: britishCouncilLogo },
   { id: 15, name: 'Nas Daily', logo_url: nasDailyLogo },
   { id: 16, name: 'Rauland Australia', logo_url: raulandLogo },
@@ -107,9 +105,9 @@ export default function ClientStrip() {
       .catch(() => {})
   }, [])
 
-  // Filter out any unallowed clients and duplicate 4x for a smooth infinite marquee loop
+  // Filter out any unallowed clients and duplicate 5x for a smooth infinite marquee loop
   const activeClients = clients.filter(c => isClientAllowed(c.name))
-  const marqueeClients = [...activeClients, ...activeClients, ...activeClients, ...activeClients]
+  const marqueeClients = [...activeClients, ...activeClients, ...activeClients, ...activeClients, ...activeClients]
 
   return (
     <section className="bg-[#FAFAFA] border-y border-neutral-200/60 py-6 md:py-8 overflow-hidden">

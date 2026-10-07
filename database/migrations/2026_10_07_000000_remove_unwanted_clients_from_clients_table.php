@@ -18,6 +18,8 @@ return new class extends Migration
             'Cargills',
             'Sampath Bank',
             'CEAT',
+            'Elephant House',
+            'Elephant',
         ];
 
         try {
