@@ -8,6 +8,26 @@ import britishCouncilLogo from '@/assets/clients/british-council.png'
 import nasDailyLogo from '@/assets/clients/nas-daily.png'
 import raulandLogo from '@/assets/clients/rauland.png'
 
+const REMOVED_CLIENT_KEYWORDS = [
+  'mas',
+  'softlogic',
+  'havelock',
+  'dialog',
+  'hemas',
+  'commercial bank',
+  'combank',
+  'keells',
+  'cargills',
+  'sampath',
+  'ceat',
+]
+
+function isClientAllowed(name: string): boolean {
+  if (!name) return false
+  const norm = name.toLowerCase().trim()
+  return !REMOVED_CLIENT_KEYWORDS.some(kw => norm.includes(kw))
+}
+
 const localClientLogos: Record<string, string> = {
   'yamaha': yamahaLogo,
   'yamaha motor': yamahaLogo,
@@ -34,6 +54,11 @@ const fallbackClients: Client[] = [
 function ClientLogo({ name, logo_url }: { name: string; logo_url?: string }) {
   const [failed, setFailed] = useState(false)
   const normName = name ? name.toLowerCase().trim() : ''
+
+  if (!isClientAllowed(normName)) {
+    return null
+  }
+
   const localUrl = localClientLogos[normName] || Object.entries(localClientLogos).find(([k]) => normName.includes(k))?.[1]
   
   const rawUrl = localUrl || logo_url || ''
@@ -44,21 +69,20 @@ function ClientLogo({ name, logo_url }: { name: string; logo_url?: string }) {
     targetUrl = ''
   }
 
+  // Never render raw text fallback — only clean brand logos
+  if (!targetUrl || failed) {
+    return null
+  }
+
   return (
     <div className="flex items-center justify-center shrink-0 h-16 md:h-20 w-48 sm:w-56 md:w-64 px-6 select-none group">
-      {!failed && targetUrl ? (
-        <img
-          src={targetUrl}
-          alt={name}
-          className="max-h-11 md:max-h-14 w-auto max-w-[170px] md:max-w-[210px] object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-out cursor-pointer"
-          onError={() => setFailed(true)}
-          loading="eager"
-        />
-      ) : (
-        <span className="text-neutral-500 group-hover:text-black transition-colors duration-300 font-display font-bold text-sm md:text-base uppercase tracking-wider text-center leading-tight whitespace-nowrap cursor-pointer">
-          {name}
-        </span>
-      )}
+      <img
+        src={targetUrl}
+        alt={name}
+        className="max-h-11 md:max-h-14 w-auto max-w-[170px] md:max-w-[210px] object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-out cursor-pointer"
+        onError={() => setFailed(true)}
+        loading="eager"
+      />
     </div>
   )
 }
@@ -71,16 +95,21 @@ export default function ClientStrip() {
       .list()
       .then(res => {
         if (res && res.data && res.data.length > 0) {
-          const apiNames = new Set(res.data.map(c => c.name.toLowerCase()))
-          const combined = [...res.data, ...fallbackClients.filter(c => !apiNames.has(c.name.toLowerCase()))]
+          const validApiData = res.data.filter(c => isClientAllowed(c.name))
+          const apiNames = new Set(validApiData.map(c => c.name.toLowerCase()))
+          const combined = [
+            ...validApiData,
+            ...fallbackClients.filter(c => isClientAllowed(c.name) && !apiNames.has(c.name.toLowerCase())),
+          ]
           setClients(combined as Client[])
         }
       })
       .catch(() => {})
   }, [])
 
-  // Duplicate 4x inside ONE single track container to prevent marquee collisions on wide screens
-  const marqueeClients = [...clients, ...clients, ...clients, ...clients]
+  // Filter out any unallowed clients and duplicate 4x for a smooth infinite marquee loop
+  const activeClients = clients.filter(c => isClientAllowed(c.name))
+  const marqueeClients = [...activeClients, ...activeClients, ...activeClients, ...activeClients]
 
   return (
     <section className="bg-[#FAFAFA] border-y border-neutral-200/60 py-6 md:py-8 overflow-hidden">
