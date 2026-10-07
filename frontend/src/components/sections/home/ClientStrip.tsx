@@ -1,47 +1,18 @@
 import { useEffect, useState } from 'react'
 import { api, Client, resolveImageUrl } from '@/lib/api'
 
-import dialogLogo from '@/assets/clients/dialog.svg'
-import masLogo from '@/assets/clients/mas.png'
 import yamahaLogo from '@/assets/clients/yamaha.svg'
 import pepsiLogo from '@/assets/clients/pepsi.png'
-import hemasLogo from '@/assets/clients/hemas.svg'
-import softlogicLifeLogo from '@/assets/clients/softlogic-life.png'
-import cargillsLogo from '@/assets/clients/cargills.png'
-import commercialBankLogo from '@/assets/clients/commercial-bank.svg'
-import keellsLogo from '@/assets/clients/keells.png'
-import sampathLogo from '@/assets/clients/sampath-bank.png'
 import elephantHouseLogo from '@/assets/clients/elephant-house.png'
-import havelockLogo from '@/assets/clients/havelock-city-mall.png'
 import britishCouncilLogo from '@/assets/clients/british-council.png'
 import nasDailyLogo from '@/assets/clients/nas-daily.png'
 import raulandLogo from '@/assets/clients/rauland.png'
 
 const localClientLogos: Record<string, string> = {
-  'havelock city mall': havelockLogo,
-  'havelock city': havelockLogo,
-  'havelock': havelockLogo,
-  'havelock mall': havelockLogo,
   'yamaha': yamahaLogo,
   'yamaha motor': yamahaLogo,
   'pepsi': pepsiLogo,
   'pepsico': pepsiLogo,
-  'mas': masLogo,
-  'mas holdings': masLogo,
-  'softlogic': softlogicLifeLogo,
-  'softlogic life': softlogicLifeLogo,
-  'softlogic holdings': softlogicLifeLogo,
-  'dialog': dialogLogo,
-  'dialog axiata': dialogLogo,
-  'hemas': hemasLogo,
-  'commercial bank': commercialBankLogo,
-  'combank': commercialBankLogo,
-  'keells': keellsLogo,
-  'john keells': keellsLogo,
-  'john keells group': keellsLogo,
-  'cargills': cargillsLogo,
-  'sampath': sampathLogo,
-  'sampath bank': sampathLogo,
   'elephant house': elephantHouseLogo,
   'elephant': elephantHouseLogo,
   'british council': britishCouncilLogo,
@@ -52,18 +23,9 @@ const localClientLogos: Record<string, string> = {
 }
 
 const fallbackClients: Client[] = [
-  { id: 1, name: 'Havelock City Mall', logo_url: havelockLogo },
-  { id: 2, name: 'Dialog Axiata', logo_url: dialogLogo },
-  { id: 3, name: 'MAS Holdings', logo_url: masLogo },
   { id: 4, name: 'Yamaha', logo_url: yamahaLogo },
   { id: 5, name: 'PepsiCo', logo_url: pepsiLogo },
   { id: 6, name: 'Elephant House', logo_url: elephantHouseLogo },
-  { id: 8, name: 'Hemas', logo_url: hemasLogo },
-  { id: 9, name: 'Softlogic Life', logo_url: softlogicLifeLogo },
-  { id: 10, name: 'Cargills', logo_url: cargillsLogo },
-  { id: 11, name: 'Commercial Bank', logo_url: commercialBankLogo },
-  { id: 12, name: 'Keells', logo_url: keellsLogo },
-  { id: 13, name: 'Sampath Bank', logo_url: sampathLogo },
   { id: 14, name: 'British Council', logo_url: britishCouncilLogo },
   { id: 15, name: 'Nas Daily', logo_url: nasDailyLogo },
   { id: 16, name: 'Rauland Australia', logo_url: raulandLogo },
@@ -117,8 +79,8 @@ export default function ClientStrip() {
       .catch(() => {})
   }, [])
 
-  // Duplicate 3x inside ONE single track container to prevent marquee collisions
-  const marqueeClients = [...clients, ...clients, ...clients]
+  // Duplicate 4x inside ONE single track container to prevent marquee collisions on wide screens
+  const marqueeClients = [...clients, ...clients, ...clients, ...clients]
 
   return (
     <section className="bg-[#FAFAFA] border-y border-neutral-200/60 py-6 md:py-8 overflow-hidden">
