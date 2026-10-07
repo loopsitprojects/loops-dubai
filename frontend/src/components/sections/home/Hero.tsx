@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { resolveImageUrl } from '@/lib/api'
 
 const MOBILE_VIDEO_URL = 'https://ai.loopsintegrated.co/loopsvideos/Webshowreel2.1vert.mp4'
-const DESKTOP_VIDEO_URL = 'https://ai.loopsintegrated.co/loopsvideos/final.mp4'
+const DESKTOP_VIDEO_URL = 'https://ai.loopsintegrated.co/loopsvideos/Showreel/Dubaisw.mp4'
 
 const isMobileViewport = () => window.innerWidth < 768
 
